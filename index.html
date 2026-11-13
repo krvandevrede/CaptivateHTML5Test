@@ -30,36 +30,36 @@
     <link rel="preconnect" href="https://cloud.scorm.com" crossorigin>
     <script src="scormdriver.js" charset="utf-8"></script>
     <script>
-      // Runtime fixer for SVG image href paths in GitHub Pages subfolders
-      window.addEventListener('DOMContentLoaded', () => {
-          const basePath = "/CaptivateHTML5Test/";
-          
-          // Fix SVG image elements dynamically
-          document.querySelectorAll('image').forEach(img => {
-              const currentHref = img.getAttribute('href');
-              if (currentHref && !currentHref.startsWith('/') && !currentHref.startsWith('http') && !currentHref.startsWith(basePath)) {
-                  img.setAttribute('href', basePath + currentHref);
+      // Aggressive runtime path fixer for GitHub Pages subfolders
+      const basePath = "/CaptivateHTML5Test/";
+
+      function fixSvgImages() {
+          // Target all SVG image tags and standard image tags
+          document.querySelectorAll('image, img').forEach(el => {
+              const attr = el.tagName.toLowerCase() === 'image' ? 'href' : 'src';
+              const currentVal = el.getAttribute(attr) || el.getAttribute('xlink:href');
+              
+              if (currentVal && !currentVal.startsWith('/') && !currentVal.startsWith('http') && !currentVal.startsWith(basePath)) {
+                  el.setAttribute(attr, basePath + currentVal);
+                  if (attr === 'href') {
+                      el.setAttribute('xlink:href', basePath + currentVal);
+                  }
               }
           });
+      }
 
-          // Also monitor for dynamically injected Captivate slides/elements
-          const observer = new MutationObserver((mutations) => {
-              mutations.forEach((mutation) => {
-                  mutation.addedNodes.forEach((node) => {
-                      if (node.nodeType === 1) {
-                          const images = node.tagName === 'IMAGE' ? [node] : node.querySelectorAll('image');
-                          images.forEach(img => {
-                              const currentHref = img.getAttribute('href');
-                              if (currentHref && !currentHref.startsWith('/') && !currentHref.startsWith('http') && !currentHref.startsWith(basePath)) {
-                                  img.setAttribute('href', basePath + currentHref);
-                              }
-                          });
-                      }
-                  });
-              });
-          });
-          observer.observe(document.body, { childList: true, subtree: true });
+      // Run continuously as Captivate builds the DOM elements
+      const observer = new MutationObserver(() => {
+          fixSvgImages();
       });
+
+      window.addEventListener('DOMContentLoaded', () => {
+          fixSvgImages();
+          observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['href', 'src'] });
+      });
+
+      // Also run periodically during startup to catch fast element injections
+      setInterval(fixSvgImages, 100);
 
       USE_LEGACY_IDENTIFIERS_FOR_2004 = true;
       REVIEW_MODE_IS_READ_ONLY = false;
