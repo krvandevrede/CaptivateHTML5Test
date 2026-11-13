@@ -5,7 +5,6 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=3, user-scalable=1"
     />
-    <base href="/CaptivateHTML5Test/" />
     <title></title>
     <link rel="preload" as="image" href="dr/010025.png" />
     <link rel="preload" as="image" href="dr/010027.jpg" />
@@ -31,6 +30,37 @@
     <link rel="preconnect" href="https://cloud.scorm.com" crossorigin>
     <script src="scormdriver.js" charset="utf-8"></script>
     <script>
+      // Runtime fixer for SVG image href paths in GitHub Pages subfolders
+      window.addEventListener('DOMContentLoaded', () => {
+          const basePath = "/CaptivateHTML5Test/";
+          
+          // Fix SVG image elements dynamically
+          document.querySelectorAll('image').forEach(img => {
+              const currentHref = img.getAttribute('href');
+              if (currentHref && !currentHref.startsWith('/') && !currentHref.startsWith('http') && !currentHref.startsWith(basePath)) {
+                  img.setAttribute('href', basePath + currentHref);
+              }
+          });
+
+          // Also monitor for dynamically injected Captivate slides/elements
+          const observer = new MutationObserver((mutations) => {
+              mutations.forEach((mutation) => {
+                  mutation.addedNodes.forEach((node) => {
+                      if (node.nodeType === 1) {
+                          const images = node.tagName === 'IMAGE' ? [node] : node.querySelectorAll('image');
+                          images.forEach(img => {
+                              const currentHref = img.getAttribute('href');
+                              if (currentHref && !currentHref.startsWith('/') && !currentHref.startsWith('http') && !currentHref.startsWith(basePath)) {
+                                  img.setAttribute('href', basePath + currentHref);
+                              }
+                          });
+                      }
+                  });
+              });
+          });
+          observer.observe(document.body, { childList: true, subtree: true });
+      });
+
       USE_LEGACY_IDENTIFIERS_FOR_2004 = true;
       REVIEW_MODE_IS_READ_ONLY = false;
       window.onbeforeunload = () => window.Unload();
